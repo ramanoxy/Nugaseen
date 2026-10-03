@@ -3,6 +3,7 @@ node_modules
 .nitro
 .cache
 .output
+.data
 dist
 *.log
 .env

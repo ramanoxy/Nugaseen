@@ -19,36 +19,92 @@ export interface SyncProvider {
 
 const JSON_HEADERS = { 'Content-Type': 'application/json', Accept: 'application/json' }
 
+/* ----------------------------------------------------- nitro (internal) --- */
+function nitroProvider(): SyncProvider {
+  return {
+    name: 'nitro',
+    codec: 'base32num',
+
+    async create(data) {
+      const storage = useStorage('sync')
+      let id = ''
+      let attempts = 0
+      while (attempts < 10) {
+        attempts++
+        const num = Math.floor(100_000_000 + Math.random() * 900_000_000)
+        id = num.toString()
+        const has = await storage.hasItem(id)
+        if (!has) break
+      }
+      await storage.setItem(id, data)
+      return id
+    },
+
+    async read(id) {
+      const storage = useStorage('sync')
+      const item = await storage.getItem(id)
+      if (!item) {
+        throw createError({
+          statusCode: 404,
+          statusMessage: 'Kode itu belum terdaftar atau sudah kadaluwarsa di penyimpanan.',
+        })
+      }
+      return item
+    },
+
+    async write(id, data) {
+      const storage = useStorage('sync')
+      await storage.setItem(id, data)
+    },
+  }
+}
+
 /* --------------------------------------------------------- jsonblob.com --- */
 const JSONBLOB = 'https://jsonblob.com/api/jsonBlob'
 
 function jsonblobProvider(): SyncProvider {
+  const fallback = nitroProvider()
+
   return {
     name: 'jsonblob',
     codec: 'base32num',
 
     async create(data) {
-      const res = await $fetch.raw<unknown>(JSONBLOB, {
-        method: 'POST',
-        body: data,
-        headers: JSON_HEADERS,
-      })
-      const id =
-        res.headers.get('x-jsonblob') ||
-        res.headers.get('location')?.split('/').filter(Boolean).pop() ||
-        ''
-      if (!/^\d+$/.test(id)) throw new Error('Penyimpanan nggak ngasih ID balik.')
-      return id
+      try {
+        const res = await $fetch.raw<unknown>(JSONBLOB, {
+          method: 'POST',
+          body: data,
+          headers: JSON_HEADERS,
+        })
+        const id =
+          res.headers.get('x-jsonblob') ||
+          res.headers.get('location')?.split('/').filter(Boolean).pop() ||
+          ''
+        if (!/^\d+$/.test(id)) throw new Error('Penyimpanan nggak ngasih ID balik.')
+        return id
+      } catch {
+        return fallback.create(data)
+      }
     },
 
-    read: (id) => $fetch(`${JSONBLOB}/${encodeURIComponent(id)}`, { headers: JSON_HEADERS }),
+    async read(id) {
+      try {
+        return await $fetch(`${JSONBLOB}/${encodeURIComponent(id)}`, { headers: JSON_HEADERS })
+      } catch {
+        return fallback.read(id)
+      }
+    },
 
     async write(id, data) {
-      await $fetch(`${JSONBLOB}/${encodeURIComponent(id)}`, {
-        method: 'PUT',
-        body: data,
-        headers: JSON_HEADERS,
-      })
+      try {
+        await $fetch(`${JSONBLOB}/${encodeURIComponent(id)}`, {
+          method: 'PUT',
+          body: data,
+          headers: JSON_HEADERS,
+        })
+      } catch {
+        return fallback.write(id, data)
+      }
     },
   }
 }
@@ -90,9 +146,10 @@ function jsonstorageProvider(apiKey: string): SyncProvider {
 
 export function getProvider(): SyncProvider {
   const cfg = useRuntimeConfig()
-  const name = String(cfg.syncProvider || 'jsonblob').toLowerCase()
+  const name = String(cfg.syncProvider || 'nitro').toLowerCase()
   if (name === 'jsonstorage') return jsonstorageProvider(String(cfg.syncApiKey || ''))
-  return jsonblobProvider()
+  if (name === 'jsonblob') return jsonblobProvider()
+  return nitroProvider()
 }
 
 /* ----------------------------------------------------------- kode sync --- */

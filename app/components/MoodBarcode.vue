@@ -141,9 +141,11 @@ const tableId = useId()
   align-items: center;
   gap: 0.5rem;
   min-height: 1.6rem;
-  padding: 0.35rem 0.5rem;
+  padding: 0.45rem 0.75rem;
   background: var(--void-2);
-  border: var(--bw-2) solid var(--line);
+  border: 1px solid var(--line-2);
+  border-radius: 0 0 8px 8px;
+  border-top: 0;
   font-size: 0.9rem;
 }
 

@@ -200,8 +200,15 @@ function saveFinish(reflection: Reflection) {
   gap: 0.5rem;
   padding: 0.6rem;
   background: var(--void-2);
-  border: var(--bw) solid var(--chalk);
-  box-shadow: var(--off) var(--off) 0 var(--signal);
+  border: 1px solid var(--line-2);
+  border-radius: 12px;
+  box-shadow: 0 4px 16px -2px rgba(0, 0, 0, 0.25);
+  transition: border-color 0.22s ease, box-shadow 0.22s ease;
+}
+
+.addbar:focus-within {
+  border-color: var(--signal);
+  box-shadow: 0 4px 20px -2px rgba(74, 139, 255, 0.15);
 }
 
 .addbar .input {
@@ -215,7 +222,8 @@ function saveFinish(reflection: Reflection) {
   gap: 0.5rem;
   padding: 0.5rem 0.7rem;
   background: var(--void-2);
-  border: var(--bw-2) dashed var(--line-2);
+  border: 1px dashed var(--line-2);
+  border-radius: 8px;
   font-size: 0.9rem;
 }
 </style>

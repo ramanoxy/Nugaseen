@@ -203,9 +203,9 @@ function doUnlink() {
           </p>
         </div>
         <div class="info-card slab--quiet">
-          <h3>Penyimpanan gratis</h3>
+          <h3>Penyimpanan terpercaya</h3>
           <p class="muted small">
-            Pakai jsonblob.com atau jsonstorage.net. Blob bisa kehapus kalau nggak disentuh sebulan — tinggal bikin kode baru.
+            Tersimpan aman di server Nugaseen. Kamu juga bisa pakai jsonstorage atau ekspor ke file JSON kapan saja.
           </p>
         </div>
       </div>
@@ -279,6 +279,7 @@ function doUnlink() {
   padding: 1rem;
   display: grid;
   gap: 0.4rem;
-  border: var(--bw-2) solid var(--line-2);
+  border: 1px solid var(--line-2);
+  border-radius: 10px;
 }
 </style>

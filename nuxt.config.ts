@@ -9,8 +9,17 @@ export default defineNuxtConfig({
   css: ['~/assets/css/main.css'],
 
   runtimeConfig: {
-    syncProvider: 'jsonblob',
+    syncProvider: 'nitro',
     syncApiKey: '',
+  },
+
+  nitro: {
+    storage: {
+      sync: {
+        driver: 'fs',
+        base: './.data/sync',
+      },
+    },
   },
 
   app: {

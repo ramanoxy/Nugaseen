@@ -44,11 +44,14 @@
 
   --bad: #ff4d6b;
 
-  /* geometri brutalis */
-  --bw: 3px;
-  --bw-2: 2px;
-  --off: 6px;
-  --off-sm: 4px;
+  /* geometri modern & santai */
+  --bw: 1px;
+  --bw-2: 1px;
+  --off: 0px;
+  --off-sm: 0px;
+  --radius-sm: 6px;
+  --radius: 10px;
+  --radius-lg: 14px;
 
   --shell: 68rem;
   --gap: 1rem;
@@ -229,23 +232,28 @@
     width: 1.1rem;
     height: 1.1rem;
     background: var(--signal);
-    border: var(--bw-2) solid var(--chalk);
+    border-radius: 4px;
     flex: none;
   }
 
   .nav {
     display: flex;
-    gap: 0;
-    border: var(--bw-2) solid var(--chalk);
+    gap: 0.25rem;
+    padding: 0.25rem;
+    background: var(--void-2);
+    border: 1px solid var(--line-2);
+    border-radius: 8px;
   }
 
   .nav__link {
-    padding: 0.4rem 0.85rem;
+    padding: 0.35rem 0.8rem;
     font-size: 0.85rem;
     font-weight: 700;
     text-decoration: none;
-    border-inline-end: var(--bw-2) solid var(--chalk);
-    background: var(--slab);
+    background: transparent;
+    border-radius: 6px;
+    color: var(--chalk-2);
+    transition: all 0.2s ease;
   }
 
   .nav__link:last-child {
@@ -254,6 +262,7 @@
 
   .nav__link:hover {
     background: var(--slab-2);
+    color: var(--chalk);
   }
 
   .nav__link[aria-current='page'] {
@@ -314,18 +323,25 @@
 
 /* ---------------------------------------------------------- components --- */
 @layer components {
-  /* ---- slab: blok dasar brutalis ---- */
+  /* ---- slab: card / panel santai ---- */
   .slab {
     background: var(--slab);
-    border: var(--bw) solid var(--chalk);
-    box-shadow: var(--off) var(--off) 0 var(--signal);
-    padding: 1.1rem;
+    border: 1px solid var(--line-2);
+    border-radius: 12px;
+    box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.25);
+    padding: 1.25rem;
+    transition: border-color 0.22s ease, box-shadow 0.22s ease;
+  }
+
+  .slab:hover {
+    border-color: var(--chalk-3);
   }
 
   .slab--quiet {
-    border-color: var(--line-2);
+    border-color: var(--line);
     box-shadow: none;
     background: var(--void-2);
+    border-radius: 12px;
   }
 
   .slab--flush {
@@ -343,7 +359,8 @@
     font-weight: 700;
     letter-spacing: -0.01em;
     background: var(--slab-2);
-    border: var(--bw-2) solid var(--line-2);
+    border: 1px solid var(--line-2);
+    border-radius: 8px;
     box-shadow: none;
     transition: all 0.22s ease;
     text-decoration: none;
@@ -351,7 +368,8 @@
   }
 
   .btn:hover:not(:disabled) {
-    background: var(--slab-2);
+    background: var(--line);
+    border-color: var(--chalk-3);
     transform: translateY(-1px);
   }
 
@@ -373,6 +391,7 @@
 
   .btn--go:hover:not(:disabled) {
     background: #6ba3ff;
+    border-color: #6ba3ff;
   }
 
   .btn--bad {
@@ -387,7 +406,8 @@
 
   .btn--bare {
     background: none;
-    border-color: var(--line-2);
+    border-color: transparent;
+    border-radius: 6px;
     box-shadow: none;
     color: var(--chalk-2);
     font-size: 0.8rem;
@@ -396,7 +416,7 @@
 
   .btn--bare:hover:not(:disabled) {
     color: var(--chalk);
-    border-color: var(--chalk-3);
+    border-color: var(--line-2);
     background: var(--slab-2);
   }
 
@@ -443,16 +463,19 @@
   .textarea,
   .select {
     background: var(--sunk);
-    border: var(--bw-2) solid var(--line-2);
-    padding: 0.6rem 0.7rem;
+    border: 1px solid var(--line-2);
+    padding: 0.6rem 0.75rem;
     width: 100%;
-    border-radius: 0;
+    border-radius: 8px;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
   }
 
   .input:focus,
   .textarea:focus,
   .select:focus {
-    border-color: var(--chalk);
+    border-color: var(--signal);
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(74, 139, 255, 0.2);
   }
 
   .textarea {
@@ -467,11 +490,16 @@
   }
 
   .err {
-    font-size: 0.82rem;
-    font-weight: 700;
+    font-size: 0.85rem;
+    font-weight: 600;
     color: var(--bad);
     display: flex;
-    gap: 0.35rem;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.55rem 0.8rem;
+    background: rgba(255, 77, 107, 0.08);
+    border: 1px solid rgba(255, 77, 107, 0.25);
+    border-radius: 8px;
   }
 
   .err::before {
@@ -479,10 +507,13 @@
     display: grid;
     place-items: center;
     flex: none;
-    width: 1.1rem;
-    height: 1.1rem;
+    width: 1.15rem;
+    height: 1.15rem;
+    border-radius: 50%;
     background: var(--bad);
-    color: var(--signal-ink);
+    color: #fff;
+    font-size: 0.75rem;
+    font-weight: 800;
   }
 
   /* ---- chip pilihan ---- */
@@ -491,13 +522,15 @@
     font-size: 0.8rem;
     font-weight: 700;
     background: var(--slab);
-    border: var(--bw-2) solid var(--line-2);
+    border: 1px solid var(--line-2);
+    border-radius: 6px;
     color: var(--chalk-2);
     white-space: nowrap;
+    transition: all 0.2s ease;
   }
 
   .chip:hover {
-    border-color: var(--chalk);
+    border-color: var(--chalk-3);
     color: var(--chalk);
   }
 
@@ -513,13 +546,15 @@
     display: flex;
     align-items: stretch;
     background: var(--slab);
-    border: var(--bw-2) solid var(--line-2);
+    border: 1px solid var(--line-2);
+    border-radius: 10px;
+    overflow: hidden;
     transition: border-color 0.22s ease, box-shadow 0.22s ease;
   }
 
   .task:hover {
     border-color: var(--chalk-3);
-    box-shadow: 0 2px 12px rgba(74, 139, 255, 0.06);
+    box-shadow: 0 4px 16px rgba(74, 139, 255, 0.08);
   }
 
   .task__edge {
@@ -599,13 +634,13 @@
   .barcode {
     display: flex;
     align-items: flex-end;
-    gap: var(--bw-2);
+    gap: 2px;
     height: 5.5rem;
     padding: 0.5rem 0.5rem 0;
     background: var(--sunk);
-    border: var(--bw-2) solid var(--line-2);
-    border-bottom-width: var(--bw);
-    border-bottom-color: var(--chalk);
+    border: 1px solid var(--line-2);
+    border-radius: 8px 8px 0 0;
+    border-bottom: 2px solid var(--line);
     overflow-x: auto;
     overscroll-behavior-x: contain;
   }
@@ -716,8 +751,11 @@
 
   /* ---- ledger arsip ---- */
   .ledger {
-    border: var(--bw) solid var(--chalk);
+    border: 1px solid var(--line-2);
+    border-radius: 12px;
+    overflow: hidden;
     background: var(--slab);
+    box-shadow: 0 4px 16px -2px rgba(0, 0, 0, 0.2);
   }
 
   .ledger__head {
@@ -725,10 +763,10 @@
     flex-wrap: wrap;
     align-items: baseline;
     gap: 0.4rem 1rem;
-    padding: 0.8rem 1rem;
-    background: var(--chalk);
-    color: var(--void);
-    border-bottom: var(--bw) solid var(--chalk);
+    padding: 0.85rem 1.1rem;
+    background: var(--slab-2);
+    color: var(--chalk);
+    border-bottom: 1px solid var(--line-2);
   }
 
   .ledger__month {
@@ -852,14 +890,16 @@
     width: 100%;
     max-width: 36rem;
     background: var(--slab);
-    border: var(--bw) solid var(--chalk);
-    box-shadow: var(--off) var(--off) 0 var(--signal);
+    border: 1px solid var(--line-2);
+    border-radius: 14px;
+    box-shadow: 0 16px 40px -4px rgba(0, 0, 0, 0.6);
     display: grid;
+    overflow: hidden;
   }
 
   .sheet__head {
     padding: 1rem 1.1rem;
-    border-bottom: var(--bw) solid var(--chalk);
+    border-bottom: 1px solid var(--line-2);
     background: var(--void-2);
     display: grid;
     gap: 0.25rem;
@@ -906,18 +946,21 @@
     text-align: start;
     padding: 0.5rem 0.6rem;
     background: var(--sunk);
-    border: var(--bw-2) solid var(--line-2);
+    border: 1px solid var(--line-2);
+    border-radius: 8px;
+    transition: all 0.2s ease;
   }
 
   .mood:hover {
-    border-color: var(--chalk);
+    border-color: var(--chalk-3);
   }
 
   .mood__swatch {
     align-self: stretch;
     min-height: 2.1rem;
     background: var(--c);
-    border: 1px solid var(--chalk);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 4px;
   }
 
   .mood__name {
@@ -960,14 +1003,16 @@
     height: 4.25rem;
     padding: 0.35rem 0.2rem;
     background: var(--sunk);
-    border: var(--bw-2) solid var(--line-2);
+    border: 1px solid var(--line-2);
+    border-radius: 8px;
     font-size: 0.78rem;
     font-weight: 700;
     color: var(--chalk-3);
+    transition: all 0.2s ease;
   }
 
   .weight:hover {
-    border-color: var(--chalk);
+    border-color: var(--chalk-3);
   }
 
   .weight__bar {
@@ -976,6 +1021,7 @@
     background: var(--line-2);
     border: 1px solid var(--sunk);
     border-bottom: 0;
+    border-radius: 4px 4px 0 0;
     flex: none;
   }
 
@@ -996,7 +1042,8 @@
     letter-spacing: 0.14em;
     word-spacing: 0.3em;
     background: var(--sunk);
-    border: var(--bw) solid var(--chalk);
+    border: 1px solid var(--line-2);
+    border-radius: 8px;
     padding: 0.7rem 0.85rem;
     overflow-wrap: anywhere;
     -webkit-user-select: all;
@@ -1007,12 +1054,13 @@
     text-transform: uppercase;
     letter-spacing: 0.1em;
     width: 100%;
-    border-radius: 0;
+    border-radius: 8px;
   }
 
   /* ---- kosong ---- */
   .empty {
-    border: var(--bw-2) dashed var(--line-2);
+    border: 1px dashed var(--line-2);
+    border-radius: 10px;
     padding: 1.75rem 1.25rem;
     display: grid;
     gap: 0.5rem;
@@ -1042,6 +1090,7 @@
     background: var(--slab-2);
     color: var(--chalk);
     border: 1px solid var(--line-2);
+    border-radius: 8px;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
     padding: 0.6rem 1rem;
     font-size: 0.88rem;
@@ -1121,7 +1170,7 @@
 /* ------------------------------------------------------------ responsif --- */
 @media (max-width: 40rem) {
   :root {
-    --off: 5px;
+    --off: 0px;
     --gap: 0.8rem;
   }
 
