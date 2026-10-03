@@ -12,7 +12,8 @@ const { active } = useTasks()
 
       <nav class="nav" aria-label="Halaman">
         <NuxtLink class="nav__link" to="/">
-          Aktif<span v-if="active.length" class="num"> {{ active.length }}</span>
+          <span>Aktif</span>
+          <span v-if="active.length" class="nav__badge">{{ active.length }}</span>
         </NuxtLink>
         <NuxtLink class="nav__link" to="/arsip">Arsip</NuxtLink>
         <NuxtLink class="nav__link" to="/sync">Sync</NuxtLink>
