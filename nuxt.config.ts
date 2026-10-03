@@ -9,17 +9,20 @@ export default defineNuxtConfig({
   css: ['~/assets/css/main.css'],
 
   runtimeConfig: {
-    syncProvider: 'nitro',
+    syncProvider: 'cloud',
     syncApiKey: '',
   },
 
   nitro: {
-    storage: {
-      sync: {
-        driver: 'fs',
-        base: './.data/sync',
-      },
-    },
+    // fs storage dinonaktifkan di Vercel agar tidak memicu EROFS read-only filesystem
+    storage: process.env.VERCEL
+      ? {}
+      : {
+          sync: {
+            driver: 'fs',
+            base: './.data/sync',
+          },
+        },
   },
 
   app: {

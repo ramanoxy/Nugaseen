@@ -1,8 +1,14 @@
 /**
- * Jembatan ke JSON Storage API.
+ * Jembatan ke Penyimpanan Sync.
  *
  * Semua panggilan keluar lewat sini (server-side), bukan dari browser —
  * jadi nggak ada masalah CORS dan providernya bisa ditukar di satu tempat.
+ *
+ * Mendukung:
+ * 1. Cloud Provider (restful-api.dev) — default zero-config, jalan di Vercel/serverless & antar perangkat
+ * 2. Upstash Redis / Vercel KV — jika env KV_REST_API_* atau UPSTASH_* diset di Vercel
+ * 3. Nitro (internal) — untuk dev server lokal
+ * 4. jsonstorage.net — jika SYNC_API_KEY diset
  */
 
 /** Crockford base32: tanpa I, L, O, U — biar nggak ketuker pas diketik ulang. */
@@ -11,13 +17,96 @@ const A32 = '0123456789ABCDEFGHJKMNPQRSTVWXYZ'
 export interface SyncProvider {
   name: string
   /** Cara ID penyimpanan diubah jadi kode yang enak diketik manusia. */
-  codec: 'base32num' | 'raw'
+  codec: 'base32num' | 'hex32' | 'raw'
   create(data: unknown): Promise<string>
   read(id: string): Promise<unknown>
   write(id: string, data: unknown): Promise<void>
 }
 
 const JSON_HEADERS = { 'Content-Type': 'application/json', Accept: 'application/json' }
+
+/* ------------------------------------------- restful-api.dev (free cloud) --- */
+const CLOUD_URL = 'https://api.restful-api.dev/objects'
+
+function cloudProvider(): SyncProvider {
+  return {
+    name: 'cloud',
+    codec: 'hex32',
+
+    async create(data) {
+      const res = await $fetch<{ id?: string }>(CLOUD_URL, {
+        method: 'POST',
+        headers: JSON_HEADERS,
+        body: { name: 'nugaseen-sync', data },
+      })
+      if (!res?.id) throw new Error('Penyimpanan awan nggak ngasih ID balik.')
+      return res.id
+    },
+
+    async read(id) {
+      const res = await $fetch<{ data?: unknown }>(`${CLOUD_URL}/${encodeURIComponent(id)}`, {
+        headers: JSON_HEADERS,
+      })
+      if (!res?.data) {
+        throw createError({
+          statusCode: 404,
+          statusMessage: 'Kode sync itu tidak ditemukan di awan. Pastikan kodenya benar.',
+        })
+      }
+      return res.data
+    },
+
+    async write(id, data) {
+      await $fetch(`${CLOUD_URL}/${encodeURIComponent(id)}`, {
+        method: 'PUT',
+        headers: JSON_HEADERS,
+        body: { name: 'nugaseen-sync', data },
+      })
+    },
+  }
+}
+
+/* ----------------------------------------------------- Vercel KV / Upstash --- */
+function upstashProvider(url: string, token: string): SyncProvider {
+  const cleanUrl = url.replace(/\/$/, '')
+  const headers = { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
+
+  return {
+    name: 'upstash',
+    codec: 'base32num',
+
+    async create(data) {
+      const id = Math.floor(100_000_000 + Math.random() * 900_000_000).toString()
+      await $fetch(`${cleanUrl}/set/${id}`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(data),
+      })
+      return id
+    },
+
+    async read(id) {
+      const res = await $fetch<{ result?: string }>(`${cleanUrl}/get/${id}`, {
+        headers,
+      })
+      if (!res?.result) {
+        throw createError({
+          statusCode: 404,
+          statusMessage: 'Kode sync itu tidak ditemukan di penyimpanan.',
+        })
+      }
+      return typeof res.result === 'string' ? JSON.parse(res.result) : res.result
+    },
+
+    async write(id, data) {
+      await $fetch(`${cleanUrl}/set/${id}`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(data),
+      })
+    },
+  }
+}
 
 /* ----------------------------------------------------- nitro (internal) --- */
 function nitroProvider(): SyncProvider {
@@ -59,56 +148,6 @@ function nitroProvider(): SyncProvider {
   }
 }
 
-/* --------------------------------------------------------- jsonblob.com --- */
-const JSONBLOB = 'https://jsonblob.com/api/jsonBlob'
-
-function jsonblobProvider(): SyncProvider {
-  const fallback = nitroProvider()
-
-  return {
-    name: 'jsonblob',
-    codec: 'base32num',
-
-    async create(data) {
-      try {
-        const res = await $fetch.raw<unknown>(JSONBLOB, {
-          method: 'POST',
-          body: data,
-          headers: JSON_HEADERS,
-        })
-        const id =
-          res.headers.get('x-jsonblob') ||
-          res.headers.get('location')?.split('/').filter(Boolean).pop() ||
-          ''
-        if (!/^\d+$/.test(id)) throw new Error('Penyimpanan nggak ngasih ID balik.')
-        return id
-      } catch {
-        return fallback.create(data)
-      }
-    },
-
-    async read(id) {
-      try {
-        return await $fetch(`${JSONBLOB}/${encodeURIComponent(id)}`, { headers: JSON_HEADERS })
-      } catch {
-        return fallback.read(id)
-      }
-    },
-
-    async write(id, data) {
-      try {
-        await $fetch(`${JSONBLOB}/${encodeURIComponent(id)}`, {
-          method: 'PUT',
-          body: data,
-          headers: JSON_HEADERS,
-        })
-      } catch {
-        return fallback.write(id, data)
-      }
-    },
-  }
-}
-
 /* ----------------------------------------------------- jsonstorage.net --- */
 const JSONSTORAGE = 'https://api.jsonstorage.net/v1/json'
 
@@ -145,11 +184,32 @@ function jsonstorageProvider(apiKey: string): SyncProvider {
 }
 
 export function getProvider(): SyncProvider {
+  // 1. Cek Vercel KV / Upstash Redis env (jika user mengaktifkan KV di Vercel)
+  const kvUrl = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL
+  const kvToken = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN
+  if (kvUrl && kvToken) {
+    return upstashProvider(kvUrl, kvToken)
+  }
+
   const cfg = useRuntimeConfig()
-  const name = String(cfg.syncProvider || 'nitro').toLowerCase()
-  if (name === 'jsonstorage') return jsonstorageProvider(String(cfg.syncApiKey || ''))
-  if (name === 'jsonblob') return jsonblobProvider()
-  return nitroProvider()
+  const name = String(cfg.syncProvider || 'cloud').toLowerCase()
+
+  if (name === 'jsonstorage' && cfg.syncApiKey) {
+    return jsonstorageProvider(String(cfg.syncApiKey))
+  }
+
+  // 2. Di Vercel atau serverless: gunakan cloudProvider (tidak butuh fs dan zero-config)
+  if (process.env.VERCEL || process.env.NETLIFY || process.env.AWS_LAMBDA_FUNCTION_NAME) {
+    return cloudProvider()
+  }
+
+  // 3. Jika diset nitro lokal:
+  if (name === 'nitro') {
+    return nitroProvider()
+  }
+
+  // Default: cloudProvider agar bisa sync antar perangkat nyata secara gratis
+  return cloudProvider()
 }
 
 /* ----------------------------------------------------------- kode sync --- */
@@ -160,15 +220,28 @@ function badCode(): Error {
 
 /** ID penyimpanan → kode yang dipegang pengguna. */
 export function idToCode(id: string, codec: SyncProvider['codec']): string {
-  if (codec !== 'base32num' || !/^\d+$/.test(id)) return id
-  let n = BigInt(id)
-  if (n === 0n) return '0'
-  let out = ''
-  while (n > 0n) {
-    out = A32[Number(n % 32n)]! + out
-    n /= 32n
+  if (codec === 'base32num' && /^\d+$/.test(id)) {
+    let n = BigInt(id)
+    if (n === 0n) return '0'
+    let out = ''
+    while (n > 0n) {
+      out = A32[Number(n % 32n)]! + out
+      n /= 32n
+    }
+    return out
   }
-  return out
+
+  if (codec === 'hex32' && /^[0-9a-fA-F]{32}$/.test(id)) {
+    let n = BigInt('0x' + id)
+    let out = ''
+    while (n > 0n) {
+      out = A32[Number(n % 32n)]! + out
+      n /= 32n
+    }
+    return out
+  }
+
+  return id
 }
 
 /** Kode dari pengguna → ID penyimpanan. Toleran sama spasi & huruf mirip. */
@@ -176,27 +249,44 @@ export function codeToId(code: string, codec: SyncProvider['codec']): string {
   const raw = String(code ?? '').trim()
   if (!raw) throw badCode()
 
-  if (codec !== 'base32num') {
-    if (!/^[A-Za-z0-9_\-/]{8,140}$/.test(raw)) throw badCode()
-    return raw
+  if (codec === 'hex32') {
+    const clean = raw
+      .toUpperCase()
+      .replace(/[^0-9A-Z]/g, '')
+      .replace(/[IL]/g, '1')
+      .replace(/O/g, '0')
+      .replace(/U/g, 'V')
+
+    if (!clean) throw badCode()
+    let n = 0n
+    for (const ch of clean) {
+      const i = A32.indexOf(ch)
+      if (i < 0) throw badCode()
+      n = n * 32n + BigInt(i)
+    }
+    return n.toString(16).padStart(32, '0')
   }
 
-  const clean = raw
-    .toUpperCase()
-    .replace(/[^0-9A-Z]/g, '')
-    .replace(/[IL]/g, '1')
-    .replace(/O/g, '0')
-    .replace(/U/g, 'V')
+  if (codec === 'base32num') {
+    const clean = raw
+      .toUpperCase()
+      .replace(/[^0-9A-Z]/g, '')
+      .replace(/[IL]/g, '1')
+      .replace(/O/g, '0')
+      .replace(/U/g, 'V')
 
-  if (!clean || clean.length > 20) throw badCode()
-
-  let n = 0n
-  for (const ch of clean) {
-    const i = A32.indexOf(ch)
-    if (i < 0) throw badCode()
-    n = n * 32n + BigInt(i)
+    if (!clean || clean.length > 20) throw badCode()
+    let n = 0n
+    for (const ch of clean) {
+      const i = A32.indexOf(ch)
+      if (i < 0) throw badCode()
+      n = n * 32n + BigInt(i)
+    }
+    return n.toString()
   }
-  return n.toString()
+
+  if (!/^[A-Za-z0-9_\-/]{8,140}$/.test(raw)) throw badCode()
+  return raw
 }
 
 /** Status HTTP dari error ofetch, kalau ada. */
@@ -212,7 +302,7 @@ export function explain(e: unknown, what: 'baca' | 'tulis'): Error {
     return createError({
       statusCode: 404,
       statusMessage:
-        'Kode itu udah nggak ada di penyimpanan. Blob gratis kehapus kalau nggak disentuh sebulan — bikin kode baru dari perangkat yang datanya masih lengkap.',
+        'Kode itu belum ada atau sudah kadaluwarsa di awan. Bikin kode baru dari perangkat yang datanya masih lengkap.',
     })
   }
   if (status === 429) {
@@ -224,7 +314,7 @@ export function explain(e: unknown, what: 'baca' | 'tulis'): Error {
   if (status >= 500) {
     return createError({
       statusCode: 502,
-      statusMessage: 'Penyimpanan sync-nya lagi error. Data lokal kamu aman, coba lagi nanti.',
+      statusMessage: 'Penyimpanan sync lagi error. Data lokal kamu aman, coba lagi nanti.',
     })
   }
   return createError({

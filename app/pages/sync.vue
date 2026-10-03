@@ -48,6 +48,16 @@ function importFile() {
   input.click()
 }
 
+const copied = ref(false)
+
+function copyCode() {
+  if (!code.value) return
+  navigator.clipboard.writeText(code.value)
+  copied.value = true
+  toast.ok('Kode sync berhasil disalin.')
+  setTimeout(() => (copied.value = false), 2500)
+}
+
 function doUnlink() {
   unlink()
   confirmUnlink.value = false
@@ -72,9 +82,14 @@ function doUnlink() {
       <div class="row row--split">
         <div>
           <p class="label">Kode sync kamu</p>
-          <p class="code">{{ prettyCode(code) }}</p>
+          <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.35rem">
+            <p class="code" style="margin: 0">{{ prettyCode(code) }}</p>
+            <button class="btn btn--bare" @click="copyCode">
+              {{ copied ? 'Tersalin ✓' : 'Salin kode' }}
+            </button>
+          </div>
           <p class="hint" style="margin-top: 0.4rem">
-            Ketik kode ini di perangkat lain buat nyambungin.
+            Ketik atau tempel kode ini di perangkat lain buat nyambungin.
           </p>
         </div>
       </div>
@@ -148,7 +163,7 @@ function doUnlink() {
           <input
             v-model="inputCode"
             class="input code--input"
-            maxlength="30"
+            maxlength="60"
             placeholder="XXXX XXXX XXXX"
             aria-label="Kode sync"
           />
