@@ -743,9 +743,11 @@
   .tallies {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(7.5rem, 1fr));
-    gap: var(--bw-2);
-    background: var(--line);
-    border: var(--bw-2) solid var(--line-2);
+    gap: 1px;
+    background: var(--line-2);
+    border: 1px solid var(--line-2);
+    border-radius: 10px;
+    overflow: hidden;
   }
 
   .tally {
@@ -773,6 +775,201 @@
     font-size: 0.78rem;
     font-weight: 600;
     color: var(--chalk-3);
+  }
+
+  /* ---- rekap bulanan ---- */
+  .recap-card {
+    background: var(--slab);
+    border: 1px solid var(--line-2);
+    border-radius: 14px;
+    padding: 1.25rem 1.4rem;
+    display: grid;
+    gap: 1.1rem;
+    box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.25);
+  }
+
+  .recap-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.75rem 1.25rem;
+  }
+
+  .recap-kicker {
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--signal);
+    margin-bottom: 0.2rem;
+  }
+
+  .recap-verdict {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.35rem 0.8rem;
+    border-radius: 999px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    border: 1px solid;
+    line-height: 1.2;
+  }
+
+  .recap-verdict__dot {
+    width: 0.6rem;
+    height: 0.6rem;
+    border-radius: 50%;
+    background: currentColor;
+    flex: none;
+  }
+
+  .recap-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(8.5rem, 1fr));
+    gap: 0.6rem;
+  }
+
+  .recap-stat {
+    background: var(--void-2);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 0.75rem 0.9rem;
+    display: grid;
+    gap: 0.2rem;
+  }
+
+  .recap-stat__num {
+    font-family: 'Archivo Black', Archivo, Impact, sans-serif;
+    font-size: 1.45rem;
+    line-height: 1.1;
+    letter-spacing: -0.03em;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .recap-stat__label {
+    font-size: 0.76rem;
+    font-weight: 600;
+    color: var(--chalk-3);
+  }
+
+  .recap-stat__sub {
+    font-size: 0.75rem;
+    color: var(--chalk-2);
+    font-weight: 500;
+  }
+
+  .mood-meter-box {
+    display: grid;
+    gap: 0.55rem;
+    background: var(--void-2);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 0.85rem 1rem;
+  }
+
+  .mood-meter-box__title {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-size: 0.8rem;
+    font-weight: 700;
+  }
+
+  .mood-meter {
+    height: 0.75rem;
+    border-radius: 999px;
+    background: var(--sunk);
+    overflow: hidden;
+    display: flex;
+    gap: 2px;
+  }
+
+  .mood-meter__seg {
+    height: 100%;
+    background: var(--c);
+    min-width: 4px;
+    transition: width 0.3s ease;
+  }
+
+  .mood-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+
+  .mood-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.25rem 0.6rem;
+    background: var(--slab);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    font-size: 0.76rem;
+    font-weight: 600;
+    color: var(--chalk-2);
+  }
+
+  .mood-pill[data-zero='true'] {
+    opacity: 0.45;
+  }
+
+  .mood-pill__dot {
+    width: 0.55rem;
+    height: 0.55rem;
+    border-radius: 50%;
+    background: var(--c);
+    flex: none;
+  }
+
+  .spotlight-task {
+    background: var(--void-2);
+    border: 1px solid var(--line);
+    border-inline-start: 4px solid var(--c, var(--signal));
+    border-radius: 10px;
+    padding: 0.85rem 1rem;
+    display: grid;
+    gap: 0.35rem;
+  }
+
+  .spotlight-task__cap {
+    font-size: 0.72rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--chalk-3);
+  }
+
+  .spotlight-task__title {
+    font-size: 0.98rem;
+    font-weight: 700;
+  }
+
+  .spotlight-task__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem 0.6rem;
+    font-size: 0.76rem;
+    font-weight: 600;
+    color: var(--chalk-3);
+  }
+
+  .spotlight-task__quote {
+    font-size: 0.85rem;
+    font-style: italic;
+    color: var(--chalk-2);
+    margin-top: 0.2rem;
+    padding-left: 0.5rem;
+    border-left: 2px solid var(--line-2);
+  }
+
+  .month-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    align-items: center;
   }
 
   /* ---- ledger arsip ---- */
