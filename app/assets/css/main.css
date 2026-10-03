@@ -2,7 +2,7 @@
    NUGASEEN — neo-brutalism, dark only
    --------------------------------------------------------------------------
    Aturan warna di sini:
-   · violet  = ini bisa ditekan (chrome UI, satu-satunya aksen interaktif)
+   · biru    = ini bisa ditekan (chrome UI, satu-satunya aksen interaktif)
    · kuning  = ini sedang difokus (keyboard)
    · hijau→merah = ini data perasaan (ramp diverging, lihat utils/mood.ts)
    Nggak ada warna lain. Kalau ada warna di layar, dia punya arti.
@@ -12,23 +12,23 @@
 
 /* -------------------------------------------------------------- tokens --- */
 :root {
-  /* permukaan — hitam ke-violet, bukan abu-abu */
-  --void: #0d0b14;
-  --void-2: #120f1c;
-  --slab: #1a1626;
-  --slab-2: #231e33;
-  --sunk: #0a0811;
+  /* permukaan — hitam ke-biru tua */
+  --void: #0a0f1c;
+  --void-2: #0f1528;
+  --slab: #152036;
+  --slab-2: #1c2944;
+  --sunk: #060a14;
 
   /* tinta */
-  --chalk: #f2efe4;
-  --chalk-2: #b7b0c4;
-  --chalk-3: #827a94;
-  --line: #3a3450;
-  --line-2: #514868;
+  --chalk: #e4e8f0;
+  --chalk-2: #a0adc4;
+  --chalk-3: #6b7a96;
+  --line: #283550;
+  --line-2: #3a4d6a;
 
-  /* satu aksen interaktif */
-  --signal: #a06bff;
-  --signal-ink: #16081f;
+  /* satu aksen interaktif — biru */
+  --signal: #4a8bff;
+  --signal-ink: #0a1020;
 
   /* fokus keyboard — sengaja beda dari semuanya */
   --ring: #ffe14d;
@@ -120,8 +120,8 @@
     background-color: var(--void);
     /* kisi tipis — biar bidang hitamnya nggak terasa kosong */
     background-image:
-      linear-gradient(to right, rgba(242, 239, 228, 0.035) 1px, transparent 1px),
-      linear-gradient(to bottom, rgba(242, 239, 228, 0.035) 1px, transparent 1px);
+      linear-gradient(to right, rgba(200, 215, 240, 0.03) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(200, 215, 240, 0.03) 1px, transparent 1px);
     background-size: 2.5rem 2.5rem;
     background-attachment: fixed;
     color: var(--chalk);
@@ -345,13 +345,14 @@
     background: var(--slab-2);
     border: var(--bw-2) solid var(--chalk);
     box-shadow: var(--off-sm) var(--off-sm) 0 var(--line-2);
-    transition: transform 0.08s linear, box-shadow 0.08s linear;
+    transition: all 0.22s ease;
     text-decoration: none;
     white-space: nowrap;
   }
 
   .btn:hover:not(:disabled) {
-    background: var(--line);
+    background: var(--slab-2);
+    transform: translateY(-1px);
   }
 
   .btn:active:not(:disabled) {
@@ -372,7 +373,7 @@
   }
 
   .btn--go:hover:not(:disabled) {
-    background: #b588ff;
+    background: #6ba3ff;
   }
 
   .btn--bad {
@@ -516,10 +517,12 @@
     align-items: stretch;
     background: var(--slab);
     border: var(--bw-2) solid var(--line-2);
+    transition: border-color 0.22s ease, box-shadow 0.22s ease;
   }
 
   .task:hover {
-    border-color: var(--chalk);
+    border-color: var(--chalk-3);
+    box-shadow: 0 2px 12px rgba(74, 139, 255, 0.06);
   }
 
   .task__edge {
@@ -759,6 +762,7 @@
     text-align: start;
     background: none;
     gap: 0;
+    transition: background 0.22s ease;
   }
 
   .entry__head:hover {
@@ -839,7 +843,7 @@
     position: fixed;
     inset: 0;
     z-index: 50;
-    background: rgba(10, 8, 17, 0.82);
+    background: rgba(6, 10, 25, 0.85);
     display: grid;
     place-items: start center;
     padding: clamp(0.75rem, 4vh, 3rem) 1rem;

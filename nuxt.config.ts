@@ -21,7 +21,7 @@ export default defineNuxtConfig({
         { charset: 'utf-8' },
         { name: 'viewport', content: 'width=device-width, initial-scale=1, viewport-fit=cover' },
         { name: 'color-scheme', content: 'dark' },
-        { name: 'theme-color', content: '#0D0B14' },
+        { name: 'theme-color', content: '#0a0f1c' },
         {
           name: 'description',
           content:

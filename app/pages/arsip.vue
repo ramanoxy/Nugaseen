@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { Reflection, Task } from '~~/shared/types'
 
-const { finished, months, reflectAgain, reopen, statsOf } = useTasks()
+const { finished, months, reflectAgain, reopen, remove, statsOf } = useTasks()
 const toast = useToast()
 
 useHead({ title: 'Nugaseen — arsip bulanan' })
@@ -62,6 +62,11 @@ function handleReflect(task: Task) {
 function handleReopen(task: Task) {
   reopen(task.id)
   toast.ok(`"${task.title}" balik ke daftar aktif.`)
+}
+
+function handleRemove(task: Task) {
+  remove(task.id)
+  toast.ok(`"${task.title}" udah dihapus dari arsip.`)
 }
 
 function saveReflect(reflection: Reflection) {
@@ -139,6 +144,7 @@ function saveReflect(reflection: Reflection) {
             :task="t"
             @reflect="handleReflect(t)"
             @reopen="handleReopen(t)"
+            @remove="handleRemove(t)"
           />
         </ul>
       </div>

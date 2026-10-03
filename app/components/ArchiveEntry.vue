@@ -2,7 +2,7 @@
 import type { Task } from '~~/shared/types'
 
 const props = defineProps<{ task: Task }>()
-const emit = defineEmits<{ reflect: []; reopen: [] }>()
+const emit = defineEmits<{ reflect: []; reopen: []; remove: [] }>()
 
 const open = ref(false)
 const bodyId = useId()
@@ -48,6 +48,7 @@ const m = computed(() => mood(props.task.reflection?.mood))
       <div class="row">
         <button class="btn btn--bare" @click="emit('reflect')">Betulin catatan</button>
         <button class="btn btn--bare" @click="emit('reopen')">Balikin ke aktif</button>
+        <button class="btn btn--bare" style="color: var(--bad)" @click="emit('remove')">Hapus</button>
       </div>
     </div>
   </li>
