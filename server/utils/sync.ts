@@ -23,7 +23,11 @@ export interface SyncProvider {
   write(id: string, data: unknown): Promise<void>
 }
 
-const JSON_HEADERS = { 'Content-Type': 'application/json', Accept: 'application/json' }
+const JSON_HEADERS = {
+  'Content-Type': 'application/json',
+  Accept: 'application/json',
+  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Nugaseen/1.0',
+}
 
 /* ------------------------------------------- restful-api.dev (free cloud) --- */
 const CLOUD_URL = 'https://api.restful-api.dev/objects'
@@ -38,6 +42,7 @@ function cloudProvider(): SyncProvider {
         method: 'POST',
         headers: JSON_HEADERS,
         body: { name: 'nugaseen-sync', data },
+        timeout: 8000,
       })
       if (!res?.id) throw new Error('Penyimpanan awan nggak ngasih ID balik.')
       return res.id
@@ -46,6 +51,7 @@ function cloudProvider(): SyncProvider {
     async read(id) {
       const res = await $fetch<{ data?: unknown }>(`${CLOUD_URL}/${encodeURIComponent(id)}`, {
         headers: JSON_HEADERS,
+        timeout: 8000,
       })
       if (!res?.data) {
         throw createError({
@@ -61,6 +67,7 @@ function cloudProvider(): SyncProvider {
         method: 'PUT',
         headers: JSON_HEADERS,
         body: { name: 'nugaseen-sync', data },
+        timeout: 8000,
       })
     },
   }
@@ -77,19 +84,23 @@ function upstashProvider(url: string, token: string): SyncProvider {
 
     async create(data) {
       const id = Math.floor(100_000_000 + Math.random() * 900_000_000).toString()
-      await $fetch(`${cleanUrl}/set/${id}`, {
+      await $fetch(cleanUrl, {
         method: 'POST',
         headers,
-        body: JSON.stringify(data),
+        body: ['SET', id, JSON.stringify(data)],
+        timeout: 6000,
       })
       return id
     },
 
     async read(id) {
-      const res = await $fetch<{ result?: string }>(`${cleanUrl}/get/${id}`, {
+      const res = await $fetch<{ result?: string | null }>(cleanUrl, {
+        method: 'POST',
         headers,
+        body: ['GET', id],
+        timeout: 6000,
       })
-      if (!res?.result) {
+      if (!res || res.result === null || res.result === undefined) {
         throw createError({
           statusCode: 404,
           statusMessage: 'Kode sync itu tidak ditemukan di penyimpanan.',
@@ -99,10 +110,11 @@ function upstashProvider(url: string, token: string): SyncProvider {
     },
 
     async write(id, data) {
-      await $fetch(`${cleanUrl}/set/${id}`, {
+      await $fetch(cleanUrl, {
         method: 'POST',
         headers,
-        body: JSON.stringify(data),
+        body: ['SET', id, JSON.stringify(data)],
+        timeout: 6000,
       })
     },
   }
@@ -185,8 +197,13 @@ function jsonstorageProvider(apiKey: string): SyncProvider {
 
 export function getProvider(): SyncProvider {
   // 1. Cek Vercel KV / Upstash Redis env (jika user mengaktifkan KV di Vercel)
-  const kvUrl = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL
-  const kvToken = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN
+  const kvUrl =
+    process.env.KV_REST_API_URL ||
+    process.env.UPSTASH_REDIS_REST_URL ||
+    process.env.UPSTASH_REDIS_REST_URL_URL
+  const kvToken =
+    process.env.KV_REST_API_TOKEN ||
+    process.env.UPSTASH_REDIS_REST_TOKEN
   if (kvUrl && kvToken) {
     return upstashProvider(kvUrl, kvToken)
   }
@@ -218,15 +235,18 @@ function badCode(): Error {
   return createError({ statusCode: 400, statusMessage: 'Kode sync-nya nggak kebaca.' })
 }
 
+const B0 = BigInt(0)
+const B32 = BigInt(32)
+
 /** ID penyimpanan → kode yang dipegang pengguna. */
 export function idToCode(id: string, codec: SyncProvider['codec']): string {
   if (codec === 'base32num' && /^\d+$/.test(id)) {
     let n = BigInt(id)
-    if (n === 0n) return '0'
+    if (n === B0) return '0'
     let out = ''
-    while (n > 0n) {
-      out = A32[Number(n % 32n)]! + out
-      n /= 32n
+    while (n > B0) {
+      out = A32[Number(n % B32)]! + out
+      n /= B32
     }
     return out
   }
@@ -234,9 +254,9 @@ export function idToCode(id: string, codec: SyncProvider['codec']): string {
   if (codec === 'hex32' && /^[0-9a-fA-F]{32}$/.test(id)) {
     let n = BigInt('0x' + id)
     let out = ''
-    while (n > 0n) {
-      out = A32[Number(n % 32n)]! + out
-      n /= 32n
+    while (n > B0) {
+      out = A32[Number(n % B32)]! + out
+      n /= B32
     }
     return out
   }
@@ -258,11 +278,11 @@ export function codeToId(code: string, codec: SyncProvider['codec']): string {
       .replace(/U/g, 'V')
 
     if (!clean) throw badCode()
-    let n = 0n
+    let n = B0
     for (const ch of clean) {
       const i = A32.indexOf(ch)
       if (i < 0) throw badCode()
-      n = n * 32n + BigInt(i)
+      n = n * B32 + BigInt(i)
     }
     return n.toString(16).padStart(32, '0')
   }
@@ -276,11 +296,11 @@ export function codeToId(code: string, codec: SyncProvider['codec']): string {
       .replace(/U/g, 'V')
 
     if (!clean || clean.length > 20) throw badCode()
-    let n = 0n
+    let n = B0
     for (const ch of clean) {
       const i = A32.indexOf(ch)
       if (i < 0) throw badCode()
-      n = n * 32n + BigInt(i)
+      n = n * B32 + BigInt(i)
     }
     return n.toString()
   }
